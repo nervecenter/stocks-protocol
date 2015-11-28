@@ -10,7 +10,7 @@ import std.algorithm :  remove;
 ushort PORT_NUM = 1050;
 
 string createReply(string received, ref string[] userList, string[][] stockList) {
-    if (received.indexOf(';') != received.length - 1) { 
+    if (received[$-1] != ';') { 
         debug writeln("No semicolon. Index: ", received.indexOf(';'), " Length: ", received.length); 
         return "INP;"; 
     }
@@ -130,25 +130,11 @@ void main() {
         }
     }
 
-    // Create our server socket as a UDP Internet socket
-    try {
-        server_s = new UdpSocket();
-    } catch (SocketException e) {
-        writeln("*** ERROR - server socket() failed ");
-        return;
-    }
-
-    // Set options
+    server_s = new UdpSocket();
+    server_s.bind(new InternetAddress(InternetAddress.ADDR_ANY, PORT_NUM));
     //server_s.setOption(SocketOptionLevel.SOCKET, SocketOption.RCVTIMEO, dur!"seconds"(5));
     //server_s.blocking(false);
 
-    // Create our server address with the given port number, bind it to the socket
-    try {
-        server_s.bind(new InternetAddress(InternetAddress.ADDR_ANY, PORT_NUM));
-    } catch(AddressException e) {
-        writeln("*** ERROR - server bind() failed ");
-        return;
-    }
 
     while(1) {
         // Clear whatever is in the buffers
