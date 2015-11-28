@@ -55,11 +55,17 @@ bool verifiedUser(string username, string[] userList) {
 }
 
 string registerUsername(string username, userList) {
-    string u = username.capitalize();
-    RegexMatch m = matchAll(u, regex(`[A-Z0-9]{1-32}`));
-    if (m.front.hit != u) {
+    string ucap = username.capitalize();
+    RegexMatch m = matchAll(ucap, regex(`[A-Z0-9]{1,32}`));
+    if (m.front.hit != ucap) {
         return "INU;";
     }
+    foreach (u; userList) {
+        if (ucap == u) {
+            return "UAE;";
+        }
+    }
+    
 }
 
 void main() {
