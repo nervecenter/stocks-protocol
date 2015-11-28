@@ -12,7 +12,6 @@ void main() {
     OutBuffer               out_buf;         // Output buffer for data
     string                  out_str;         // String to be read in
     ubyte[140]              in_buf;          // Input buffer for data
-    StopWatch               sw;              // Stopwatch to track time
 
     // Create a client socket
     try {
