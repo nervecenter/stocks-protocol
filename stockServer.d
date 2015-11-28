@@ -9,12 +9,12 @@ ushort PORT_NUM = 1050;
 string parseMessage(string received) {
     if (received[$] != ";") { return "INP;" }
 
-    string code = received[0..3];
+    string code = received[0..4];
 
     switch (code) {
-        case "REG": return registerUsername(received[3..$-1]);
-        case "UNR": return unregisterUsername(received[3..$-1]);
-        case "QUO":
+        case "REG,": return registerUsername(received[4..$-1]);
+        case "UNR,": return unregisterUsername(received[4..$-1]);
+        case "QUO,":
             string[] parts = received[3..$-1].split(',');
             string username = parts[0];
             string[] stockNames = parts[1..$];
