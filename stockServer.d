@@ -135,17 +135,16 @@ void main() {
     //server_s.setOption(SocketOptionLevel.SOCKET, SocketOption.RCVTIMEO, dur!"seconds"(5));
     //server_s.blocking(false);
 
-
     while(1) {
         // Clear whatever is in the buffers
         destroy(out_buf);
         destroy(in_buf);
         
         // Listen for a message
-        writeln("Waiting...\n");
+        writeln("\nWaiting...");
         bytesin = server_s.receiveFrom(in_buf, client_addr);
         if (bytesin == 0 || bytesin == Socket.ERROR) {
-            writeln("*** ERROR - receiveFrom() failed ");
+            writeln("*** ERROR - receiveFrom() failed: ", bytesin);
             return;
         }
 
@@ -154,11 +153,13 @@ void main() {
         writeln("IP address of client = ", client_addr.toAddrString(), 
                 "  port = ", client_addr.toPortString());
 
+        string received = cast(string)in_buf;
+
         // Output the received message
-        writefln("Received from client: %s", cast(string)in_buf);
+        writefln("Received from client: %s", received);
 
         // Create response
-        string reply = createReply(cast(string)in_buf, userList, stockList);
+        string reply = createReply(received, userList, stockList);
         writefln("Sending back to client: %s", reply);
 
         // Allocate a new buffer on the heap, fill it
