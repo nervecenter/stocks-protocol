@@ -18,7 +18,7 @@ void main() {
         client_s = new Socket(AddressFamily.INET, SocketType.DGRAM, ProtocolType.UDP);
     } catch (SocketException e) {
         writeln("*** ERROR - socket() failed ");
-        exit(-1);
+        return;
     }
 
     // Set options
@@ -48,7 +48,7 @@ void main() {
         if (bytesout == Socket.ERROR)
         {
             writeln("*** ERROR - sendTo() failed ");
-            exit(-1);
+            return;
         }
         writeln("Sent.");
 
