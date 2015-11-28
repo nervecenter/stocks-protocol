@@ -1,34 +1,38 @@
 import std.stdio,
     std.socket,
     std.outbuffer,
-    std.string,
     std.conv,
     std.regex,
-    std.file,
-    std.algorithm;
+    std.string;
+import std.file :       exists;
+import std.algorithm :  remove;
 
 ushort PORT_NUM = 1050;
 
 string createReply(string received, ref string[] userList, string[][] stockList) {
-    if (received[$] != ';') { return "INP;"; }
+    if (received.indexOf(';') != received.length - 1) { 
+        debug writeln("No semicolon. Index: ", received.indexOf(';'), " Length: ", received.length); 
+        return "INP;"; 
+    }
 
     string[] parameters = received
                             .chomp(";")
                             .split(',');
     string code = parameters[0];
+    string username = parameters[1].capitalize();
 
     switch (code) {
         case "REG":
-            if (parameters.length > 2) { return "INP;"; }
-            return registerUsername(parameters[1], userList);
+            if (parameters.length > 2) { debug writeln("Too many params for register."); return "INP;"; }
+            return registerUsername(username, userList);
 
         case "UNR":
-            if (parameters.length > 2) { return "INP;"; }
-            return unregisterUsername(parameters[1], userList);
+            if (parameters.length > 2) { debug writeln("Too many params for unregister."); return "INP;"; }
+            return unregisterUsername(username, userList);
 
         case "QUO":
-            if (parameters.length < 3) { return "INP;"; }
-            return stockNumbers(parameters[1], parameters[2..$], stockList, userList);
+            if (parameters.length < 3) { debug writeln("Too few params for quote."); return "INP;"; }
+            return stockNumbers(username, parameters[2..$], stockList, userList);
 
         default:
             return "INC;";
@@ -54,9 +58,8 @@ string stockNumbers(string username, string[] reqStocks, string[][] stockList, s
 }
 
 bool verifiedUser(string username, string[] userList) {
-    string ucap = username.capitalize();
     foreach (u; userList) {
-        if (u == ucap) {
+        if (u == username) {
             return true;
         }
     }
@@ -64,24 +67,22 @@ bool verifiedUser(string username, string[] userList) {
 }
 
 string registerUsername(string username, ref string[] userList) {
-    string ucap = username.capitalize();
-    auto m = matchAll(ucap, regex(`[A-Z0-9]{1,32}`));
-    if (m.front.hit != ucap) {
+    auto m = matchAll(username, regex(`[A-Z0-9]{1,32}`));
+    if (m.front.hit != username) {
         return "INU;";
     }
     foreach (u; userList) {
-        if (ucap == u) {
+        if (username == u) {
             return "UAE;";
         }
     }
-    userList ~= ucap;
+    userList ~= username;
     return "ROK;";
 }
 
 string unregisterUsername(string username, ref string[] userList) {
-    string ucap = username.capitalize();
     foreach (u; userList) {
-        if (ucap == u) {
+        if (username == u) {
             userList.remove(u);
             return "ROK;";
         }
@@ -92,29 +93,31 @@ string unregisterUsername(string username, ref string[] userList) {
 void main() {
     UdpSocket       server_s;        // Listen socket descriptor
     Address         client_addr;     // Client Internet address
-    ubyte[140]      in_buf;          // Input buffer for receiving data
+    ubyte[]         in_buf;          // Input buffer for receiving data
     OutBuffer       out_buf;         // Output buffer for sending data
     ptrdiff_t       bytesin;         // Number of bytes we receive, for checking error
     string[]        userList;
     string[][]      stockList;
 
-    // Open our list of users file
-    if (!exists("userList.txt")) { 
-        write("userList.txt", "");
-        userList = [];
-    } else {
-        userList = readText("userList.txt").split('\n');
+    // Open our stocks file
+    userList = [];
+    if (exists("userList.txt")) {
+        File f = File("userList.txt", "r");
+        string user;
+        
+        while ((user = f.readln()) !is null) {
+            userList ~= user;
+        }
     }
 
     // Open our stocks file
     stockList = [];
-    if (!exists("stockList.txt")) { 
-        write("stockList.txt", "");
-    } else {
-        string[] stocklines = readText("stockList.txt").split('\n');
-
-        foreach (s; stocklines) {
-            stockList ~= s.split(',');
+    if (exists("stockList.txt")) {
+        File f = File("stockList.txt", "r");
+        string stock;
+        
+        while ((stock = f.readln()) !is null) {
+            stockList ~= stock.split(',');
         }
     }
 
@@ -161,11 +164,11 @@ void main() {
 
         // Create response
         string reply = createReply(cast(string)in_buf, userList, stockList);
-        writefln("Sending back to client: %s", to_send);
+        writefln("Sending back to client: %s", reply);
 
         // Allocate a new buffer on the heap, fill it
         out_buf = new OutBuffer();
-        out_buf.write(to_send);
+        out_buf.write(reply);
 
         // Send our message
         write("Sending message....");
@@ -178,14 +181,14 @@ void main() {
     }
 
     // Write changes to file
-    remove("userList.txt");
+    File f = File("userList.txt", "w");
     foreach (u; userList) {
-        write("userList.txt", u ~ "\n");
+        f.writeln(u);
     }
 
-    remove("stockList.txt");
+    f = File("stockList.txt", "w");
     foreach (s; stockList) {
-        write("stockList.txt", s[0] ~ "," ~ s[1] ~ "\n");
+        f.writeln(s[0] ~ "," ~ s[1]);
     }
 
     server_s.shutdown(SocketShutdown.BOTH);
