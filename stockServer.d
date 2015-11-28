@@ -23,15 +23,24 @@ string createReply(string received, ref string[] userList, string[][] stockList)
 
     switch (code) {
         case "REG":
-            if (parameters.length > 2) { debug writeln("Too many params for register."); return "INP;"; }
+            if (parameters.length > 2) { 
+                debug writeln("Too many params for register."); 
+                return "INP;"; 
+            }
             return registerUsername(username, userList);
 
         case "UNR":
-            if (parameters.length > 2) { debug writeln("Too many params for unregister."); return "INP;"; }
+            if (parameters.length > 2) { 
+                debug writeln("Too many params for unregister."); 
+                return "INP;"; 
+            }
             return unregisterUsername(username, userList);
 
         case "QUO":
-            if (parameters.length < 3) { debug writeln("Too few params for quote."); return "INP;"; }
+            if (parameters.length < 3) { 
+                debug writeln("Too few params for quote."); 
+                return "INP;"; 
+            }
             return stockNumbers(username, parameters[2..$], stockList, userList);
 
         default:
