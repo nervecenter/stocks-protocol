@@ -6,44 +6,52 @@ import std.stdio,
 
 ushort PORT_NUM = 1050;
 
-string parseMessage(string received) {
+string parseMessage(string received, string[] userList, string[][] stocks) {
     if (received[$] != ";") { return "INP;" }
 
     string code = received[0..4];
 
     switch (code) {
-        case "REG,": return registerUsername(received[4..$-1]);
-        case "UNR,": return unregisterUsername(received[4..$-1]);
+        case "REG,": return registerUsername(received[4..$-1], userList);
+        case "UNR,": return unregisterUsername(received[4..$-1], userList);
         case "QUO,":
             string[] parts = received[3..$-1].split(',');
             string username = parts[0];
-            string[] stockNames = parts[1..$];
-            return stockNumbers(user, stockNames);
+            string[] reqStocks = parts[1..$];
+            return stockNumbers(username, reqStocks, stocks);
         default:
             return "INC;";
     }
 }
 
-string stockNumbers(string username, string[] stockNames) {
+string stockNumbers(string username, string[] reqStocks, string[][] stocks) {
     if (!verifiedUser(username)) { return "UNR;"; }
+    if (reqStocks.length < 1) { return "INP;" }
 
     string reply = "ROK,";
 
-    foreach (name; stockNames) {
+    foreach (name; reqStocks) {
         reply ~= ",";
-        // Look through the stock list
-        // If it's there, append the value casted to a string
-        // If not, append string "-1"
-        reply ~= "-1";
+        
+        foreach (s; stocks) {
+            if (s[0] == name) {
+                reply ~= s[1];
+            } else {
+                reply ~= "-1";
+            }
+        }
     }
 
     return reply ~ ";";
 }
 
-bool verifiedUser(string username) {
-    // Comb through username list
-    // If username found, return true
-    // If username not found, return false
+bool verifiedUser(string username, string[] userList) {
+    foreach (u; userList) {
+        if (u == username) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void main() {
@@ -52,15 +60,15 @@ void main() {
     ubyte[140]      in_buf;          // Input buffer for receiving data
     OutBuffer       out_buf;         // Output buffer for sending data
     ptrdiff_t       bytesin;         // Number of bytes we receive, for checking error
-    string[]        usernames;
+    string[]        userList;
     string[][]      stocks;
 
     // Open our usernames file
-    if (!exists("usernames.txt")) { 
-        write("usernames.txt", "");
-        usernames = [];
+    if (!exists("userList.txt")) { 
+        write("userList.txt", "");
+        userList = [];
     } else {
-        usernames = readText("usernames.txt").split('\n');
+        userList = readText("userList.txt").split('\n');
     }
 
     // Open our stocks file
@@ -114,10 +122,10 @@ void main() {
                 "  port = ", client_addr.toPortString());
 
         // Output the received message
-        writefln("Received from client: %s", cast(char[])in_buf);
+        writefln("Received from client: %s", cast(string)in_buf);
 
         // Create response
-        string to_send = "Greeting from the server!";
+        string reply = parseMessage(cast(string)in_buf, usernames, stocks);
         writefln("Sending back to client: %s", to_send);
 
         // Allocate a new buffer on the heap, fill it
@@ -135,11 +143,18 @@ void main() {
     }
 
     // Write changes to file
+    remove("userList.txt");
+    foreach (u; userList) {
+        write("userList.txt", u ~ "\n");
+    }
 
-    // Close our server socket
+    remove("stocks.txt");
+    foreach (s; stocks) {
+        write("stocks.txt", s[0] ~ "," ~ s[1] ~ "\n");
+    }
+
     server_s.shutdown(SocketShutdown.BOTH);
     server_s.close();
-    writeln("Listen socket closed.");
     
     writeln("Done.");
 }
