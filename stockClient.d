@@ -1,8 +1,6 @@
 import std.stdio,
     std.socket,
-    std.c.stdlib,
     std.outbuffer,
-    std.datetime,
     std.string;
 
 ushort PORT_NUM = 1050;             // Port number used at the server
