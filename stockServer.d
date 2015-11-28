@@ -54,6 +54,14 @@ bool verifiedUser(string username, string[] userList) {
     return false;
 }
 
+string registerUsername(string username, userList) {
+    string u = username.capitalize();
+    RegexMatch m = matchAll(u, regex(`[A-Z0-9]{1-32}`));
+    if (m.front.hit != u) {
+        return "INU;";
+    }
+}
+
 void main() {
     UdpSocket       server_s;        // Listen socket descriptor
     Address         client_addr;     // Client Internet address
