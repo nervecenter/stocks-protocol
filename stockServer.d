@@ -21,7 +21,7 @@ string createReply(string received, ref string[] userList, string[string] stockL
                             .split(',');
     string code = parameters[0];
     string username = parameters[1].toUpper();
-    writeln("Username is: ", username);
+    writeln("User connected: ", username);
     if (username.length > 32) { return "INU;"; }
 
     switch (code) {
@@ -63,12 +63,6 @@ string stockNumbers(string username, string[] reqStocks, string[string] stockLis
         } else {
             reply ~= "-1";
         }
-        /*foreach (s; stockList) {
-            if (s[0] == name) {
-                reply ~= s[1];
-            }
-        }
-        reply ~= "-1";*/
     }
     return reply ~ ";";
 }
@@ -85,7 +79,7 @@ bool verifiedUser(string username, string[] userList) {
 string registerUsername(string username, ref string[] userList) {
     auto m = matchAll(username, regex(`[A-Z0-9]{1,32}`));
     string match = m.front.hit;
-    writeln("New username matched: ", match);
+    debug writeln("New username matched: ", match);
     if (match != username) {
         return "INU;";
     }
@@ -99,10 +93,11 @@ string registerUsername(string username, ref string[] userList) {
 }
 
 string unregisterUsername(string username, ref string[] userList) {
-    writeln(userList);
+    debug writeln("Old user list: ", userList);
     foreach (i, u; userList) {
         if (u == username) {
-            userList = userList;
+            userList = userList[0..i] ~ userList[i + 1..$];
+            debug writeln("New user list: ", userList);
             return "ROK;";
         }
     }

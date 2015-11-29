@@ -31,16 +31,16 @@ void main() {
     string[] messages = [];
     messages ~= "REG,Joe;";
     messages ~= "REG,Suzy;";
-    messages ~= "REG,JOE;";
-    messages ~= "REG,Joe,Joe,Joe;";
+    //messages ~= "REG,JOE;";
+    //messages ~= "REG,Joe,Joe,Joe;";
     messages ~= "QUO,joe,IBM;";
     messages ~= "QUO,joe,IBM,FB;";
-    messages ~= "QUO,joe,IBM,FBX;";
-    messages ~= "QUO,joe;";
-    messages ~= "QUO,joex,IBM;";
-    messages ~= "QUO,joejoejoejoejoejoejoejoejoejoejoejoejoejoejoe,IBM;";
-    messages ~= "QQQ,Joe,IBM;";
-    messages ~= "QUO,Joe,IBM;"; // Timeout test, three times, 5 seconds each
+    //messages ~= "QUO,joe,IBM,FBX;";
+    //messages ~= "QUO,joe;";
+    //messages ~= "QUO,joex,IBM;";
+    //messages ~= "QUO,joejoejoejoejoejoejoejoejoejoejoejoejoejoejoe,IBM;";
+    //messages ~= "QQQ,Joe,IBM;";
+    //messages ~= "QUO,Joe,IBM;"; // Timeout test, three times, 5 seconds each
     messages ~= "UNR,JOE;";
     messages ~= "QUO,joe,IBM,FB;";
 
