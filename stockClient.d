@@ -1,16 +1,16 @@
-//=================================================== file = stockClient.d =====
-//=  Program to request desired stock value from server.					=
+//================================================ file = stockClient.d =====
+//=  Program to request desired stock value from server.		    =
 //===========================================================================
 //=-------------------------------------------------------------------------=
-//=  Example input:                                                          =
-//=      REG, USERNAME;                                                     =
-//=    	 UNR, USERNAME;                                                     =
-//=		 QUO, USERNAME, APPL;												=
-//=		 QUO, USERNAME, APPL, FB;											=
+//=  Example input:                                                         =
+//=     REG, USERNAME;                                                      =
+//=    	UNR, USERNAME;                                                      =
+//=	QUO, USERNAME, APPL;						    =
+//=	QUO, USERNAME, APPL, FB;					    =
 //=-------------------------------------------------------------------------=
 //=  Bugs: None known                                                       =
 //=-------------------------------------------------------------------------=
-//=  Build: dmd stockClient.d			                                    =
+//=  Build: dmd stockClient.d			                            =
 //=-------------------------------------------------------------------------=
 //=  Execute: .\stockClient.d                                               =
 //=-------------------------------------------------------------------------=
@@ -25,14 +25,13 @@
 import std.stdio,
     std.socket,
     std.outbuffer,
-    std.string;
+    std.string,
+	core.thread;
 
 	
 //----- Defines -------------------------------------------------------------
 ushort PORT_NUM = 1050;             // Port number used at the server
 char[] IP_ADDR = "127.0.0.1".dup;   // IP address of server
-
-
 
 
 //===== Main program ========================================================
@@ -103,7 +102,7 @@ void main() {
 		}
 		
 		//Output data received
-		string received = cast(char[])in_buf;
+		string received = cast(string)in_buf;
 		string response = received[0..3];
 		
 		switch (response) {
@@ -111,14 +110,14 @@ void main() {
 				string command = out_str[0..3];
 				
 				if(command == "QUO"){
-					int i =0;
+					int i;
 					string[] parts = received[4..$-1].split(',');
 					string username = parts[0];
 					write("Requested stock(s): ");
 					
-					for(i; i < parts.length; ++i){
+					for(i = 0; i < parts.length; ++i){
 						username = parts[i];
-						if(username == 0){
+						if(i == 0){
 							write(username);
 						}
 						else{
@@ -161,12 +160,10 @@ void main() {
 				writeln("Message was corrupted");
 		}
     }
+    
     // Close the client socket
     client_s.shutdown(SocketShutdown.BOTH);
     client_s.close();
     
     writeln("Client socket has been closed.");
-}
-    
-    writeln("Done.");
 }
