@@ -40,12 +40,12 @@ void main() {
     messages ~= "QUO,joex,IBM;";
     messages ~= "QUO,joejoejoejoejoejoejoejoejoejoejoejoejoejoejoe,IBM;";
     messages ~= "QQQ,Joe,IBM;";
-    messages ~= "REG,Joe,IBM;"; // Timeout test, three times, 5 seconds each
+    messages ~= "QUO,Joe,IBM;"; // Timeout test, three times, 5 seconds each
     messages ~= "UNR,JOE;";
     messages ~= "QUO,joe,IBM,FB;";
 
     foreach (m; messages) {
-        Thread.sleep(dur!("seconds")(10)); 
+        Thread.sleep(dur!("seconds")(4)); 
         destroy(out_buf);
         destroy(in_buf);
 

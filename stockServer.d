@@ -6,10 +6,11 @@ import std.stdio,
     std.string;
 import std.file :       exists;
 import std.algorithm :  remove;
+import std.algorithm :  canFind;
 
 ushort PORT_NUM = 1050;
 
-string createReply(string received, ref string[] userList, string[][] stockList) {
+string createReply(string received, ref string[] userList, string[string] stockList) {
     if (received[$-1] != ';') { 
         debug writeln("No semicolon. Index: ", received.indexOf(';'), " Length: ", received.length); 
         return "INP;"; 
@@ -19,7 +20,9 @@ string createReply(string received, ref string[] userList, string[][] stockList)
                             .chomp(";")
                             .split(',');
     string code = parameters[0];
-    string username = parameters[1].capitalize();
+    string username = parameters[1].toUpper();
+    writeln("Username is: ", username);
+    if (username.length > 32) { return "INU;"; }
 
     switch (code) {
         case "REG":
@@ -48,20 +51,24 @@ string createReply(string received, ref string[] userList, string[][] stockList)
     }
 }
 
-string stockNumbers(string username, string[] reqStocks, string[][] stockList, string[] userList) {
+string stockNumbers(string username, string[] reqStocks, string[string] stockList, string[] userList) {
     if (!verifiedUser(username, userList)) { return "UNR;"; }
     if (reqStocks.length < 1) { return "INP;"; }
 
-    string reply = "ROK,";
+    string reply = "ROK";
     foreach (name; reqStocks) {
         reply ~= ",";
-        foreach (s; stockList) {
+        if (name in stockList) {
+            reply ~= stockList[name];
+        } else {
+            reply ~= "-1";
+        }
+        /*foreach (s; stockList) {
             if (s[0] == name) {
                 reply ~= s[1];
-            } else {
-                reply ~= "-1";
             }
         }
+        reply ~= "-1";*/
     }
     return reply ~ ";";
 }
@@ -77,7 +84,9 @@ bool verifiedUser(string username, string[] userList) {
 
 string registerUsername(string username, ref string[] userList) {
     auto m = matchAll(username, regex(`[A-Z0-9]{1,32}`));
-    if (m.front.hit != username) {
+    string match = m.front.hit;
+    writeln("New username matched: ", match);
+    if (match != username) {
         return "INU;";
     }
     foreach (u; userList) {
@@ -90,9 +99,10 @@ string registerUsername(string username, ref string[] userList) {
 }
 
 string unregisterUsername(string username, ref string[] userList) {
-    foreach (u; userList) {
-        if (username == u) {
-            userList.remove(u);
+    writeln(userList);
+    foreach (i, u; userList) {
+        if (u == username) {
+            userList = userList;
             return "ROK;";
         }
     }
@@ -102,14 +112,13 @@ string unregisterUsername(string username, ref string[] userList) {
 void main() {
     UdpSocket       server_s;        // Listen socket descriptor
     Address         client_addr;     // Client Internet address
-    ubyte[]         in_buf;          // Input buffer for receiving data
+    ubyte[4096]     in_buf;          // Input buffer for receiving data
     OutBuffer       out_buf;         // Output buffer for sending data
     ptrdiff_t       bytesin;         // Number of bytes we receive, for checking error
     string[]        userList;
-    string[][]      stockList;
+    string[string]  stockList;
 
-    // Open our stocks file
-    userList = [];
+    // Open our users file
     if (exists("userList.txt")) {
         File f = File("userList.txt", "r");
         string user;
@@ -120,13 +129,13 @@ void main() {
     }
 
     // Open our stocks file
-    stockList = [];
     if (exists("stockList.txt")) {
         File f = File("stockList.txt", "r");
         string stock;
         
         while ((stock = f.readln()) !is null) {
-            stockList ~= stock.split(',');
+            string[] nameAndVal = stock.strip().split(',');
+            stockList[nameAndVal[0]] = nameAndVal[1];
         }
     }
 
@@ -153,7 +162,7 @@ void main() {
         writeln("IP address of client = ", client_addr.toAddrString(), 
                 "  port = ", client_addr.toPortString());
 
-        string received = cast(string)in_buf;
+        string received = cast(string)in_buf[0..bytesin];
 
         // Output the received message
         writefln("Received from client: %s", received);
@@ -183,8 +192,8 @@ void main() {
     }
 
     f = File("stockList.txt", "w");
-    foreach (s; stockList) {
-        f.writeln(s[0] ~ "," ~ s[1]);
+    foreach (s; stockList.keys) {
+        f.writeln(s ~ "," ~ stockList[s]);
     }
 
     server_s.shutdown(SocketShutdown.BOTH);
