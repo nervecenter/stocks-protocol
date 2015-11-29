@@ -1,11 +1,41 @@
+//=================================================== file = stockClient.d =====
+//=  Program to request desired stock value from server.					=
+//===========================================================================
+//=-------------------------------------------------------------------------=
+//=  Example input:                                                          =
+//=      REG, USERNAME;                                                     =
+//=    	 UNR, USERNAME;                                                     =
+//=		 QUO, USERNAME, APPL;												=
+//=		 QUO, USERNAME, APPL, FB;											=
+//=-------------------------------------------------------------------------=
+//=  Bugs: None known                                                       =
+//=-------------------------------------------------------------------------=
+//=  Build: dmd stockClient.d			                                    =
+//=-------------------------------------------------------------------------=
+//=  Execute: .\stockClient.d                                               =
+//=-------------------------------------------------------------------------=
+//=  Authors: Christopher Collazo & Andres Pico                             =
+//=          University of South Florida                                    =
+//=-------------------------------------------------------------------------=
+//=  History: AP (11/28/15) - Started file                                  =
+//===========================================================================
+
+
+//----- Include files -------------------------------------------------------
 import std.stdio,
     std.socket,
     std.outbuffer,
     std.string;
 
+	
+//----- Defines -------------------------------------------------------------
 ushort PORT_NUM = 1050;             // Port number used at the server
 char[] IP_ADDR = "127.0.0.1".dup;   // IP address of server
 
+
+
+
+//===== Main program ========================================================
 void main() {
     Socket                  client_s;        // Client socket descriptor
     InternetAddress         server_addr;     // Server Internet address
@@ -24,7 +54,7 @@ void main() {
     // Set options
     client_s.setOption(SocketOptionLevel.SOCKET, SocketOption.RCVTIMEO, dur!"seconds"(5));
 
-    // Fill-in the server's address information and do a connect with the
+    // Fill-in the server's address information and do a connect with the server
     server_addr = new InternetAddress(IP_ADDR, PORT_NUM);
 
     while (1) {
@@ -33,7 +63,7 @@ void main() {
 
         //Read in message to send
         out_buf = new OutBuffer();
-        writeln("Write 140 character message to send:");
+        writeln("Waiting for request:");
         out_str = readln();
         out_str = strip(out_str);
         if (out_str.length > 140) {
@@ -61,7 +91,7 @@ void main() {
 			writeln("");
 			writeln("Retrying..");
 			
-			//Send message again
+			//Send message and receive again
 			ptrdiff_t bytesout = client_s.sendTo(out_buf.toBytes(), server_addr);
 			if (bytesout == Socket.ERROR)
 			{
@@ -72,18 +102,7 @@ void main() {
 			bytesin = client_s.receiveFrom(in_buf);
 		}
 		
-		/* Christopher's Code
-		if (bytesin == 0) {
-            writeln("No bytes received. Exiting");
-            return;
-        }
-        else if (bytesin == Socket.ERROR) {
-            writeln("*** ERROR - receiveFrom() failed.");
-            return;
-        }*/
-		
-		//After receiving message successfully
-		//if (received[$] != ";") { return "INP;" }
+		//Output data received
 		string received = cast(char[])in_buf;
 		string response = received[0..3];
 		
@@ -100,12 +119,13 @@ void main() {
 					for(i; i < parts.length; ++i){
 						username = parts[i];
 						if(username == 0){
-							writeln(username);
+							write(username);
 						}
 						else{
-							writeln(", ", username);
+							write(", ", username);
 						}
 					}
+					writeln(".");
 				}
 				
 				else if(command == "REG"){
@@ -138,15 +158,14 @@ void main() {
 				continue;
 			
 			default:
-				return "Message was corrupted";
+				writeln("Message was corrupted");
 		}
     }
-
     // Close the client socket
     client_s.shutdown(SocketShutdown.BOTH);
     client_s.close();
     
-    writeln("Done.");
+    writeln("Client socket has been closed.");
 }
     
     writeln("Done.");
