@@ -1,16 +1,16 @@
 //================================================ file = stockClient.d =====
-//=  Program to request desired stock value from server.		    		=
+//=  Program to request desired stock value from server.                    =
 //===========================================================================
 //=-------------------------------------------------------------------------=
 //=  Example input:                                                         =
 //=     REG, USERNAME;                                                      =
-//=    	UNR, USERNAME;                                                      =
-//=	    QUO, USERNAME, APPL;						    					=
-//=	    QUO, USERNAME, APPL, FB;					    					=
+//=     UNR, USERNAME;                                                      =
+//=     QUO, USERNAME, APPL;                                                =
+//=     QUO, USERNAME, APPL, FB;                                            =
 //=-------------------------------------------------------------------------=
 //=  Bugs: None known                                                       =
 //=-------------------------------------------------------------------------=
-//=  Build: dmd stockClient.d			                            		=
+//=  Build: dmd stockClient.d                                               =
 //=-------------------------------------------------------------------------=
 //=  Execute: .\stockClient.d                                               =
 //=-------------------------------------------------------------------------=
@@ -20,15 +20,15 @@
 //=  History: AP (11/28/15) - Started file                                  =
 //===========================================================================
 
- 
+
 //----- Include files -------------------------------------------------------
 import std.stdio,
     std.socket,
     std.outbuffer,
     std.string,
-	core.thread;
+    core.thread;
 
-	
+    
 //----- Defines -------------------------------------------------------------
 ushort PORT_NUM = 1050;             // Port number used at the server
 char[] IP_ADDR = "127.0.0.1".dup;   // IP address of server
@@ -81,84 +81,84 @@ void main() {
         }
         writeln("Sent.");
 
-		
+        
         // Wait to receive a message for 3 seconds, else resend
-		ptrdiff_t bytesin = client_s.receiveFrom(in_buf);
-		while (bytesin == 0 || bytesin == Socket.ERROR)
-		{
-			Thread.sleep( dur!("seconds")( 3 ) ); 
-			writeln("");
-			writeln("Retrying..");
-			
-			//Send message and receive again
-			bytesout = client_s.sendTo(out_buf.toBytes(), server_addr);
-			if (bytesout == Socket.ERROR)
-			{
-				writeln("*** ERROR - sendTo() failed ");
-				return;
-			}
-			writeln("Sent.");
-			bytesin = client_s.receiveFrom(in_buf);
-		}
-		
-		//Output data received
-		string received = cast(string)in_buf;
-		string response = received[0..3];
-		
-		switch (response) {
-			case "ROK": 
-				string command = out_str[0..3];
-				
-				if(command == "QUO"){
-					int i;
-					string[] parts = received[4..$-1].split(',');
-					string username = parts[0];
-					write("Requested stock(s): ");
-					
-					for(i = 0; i < parts.length; ++i){
-						username = parts[i];
-						if(i == 0){
-							write(username);
-						}
-						else{
-							write(", ", username);
-						}
-					}
-					writeln(".");
-				}
-				
-				else if(command == "REG"){
-					writeln("User was registered successfully");
-				}
-				
-				else if(command == "UNR"){
-					writeln("User was unregistered successfully");
-				}
-				continue;
-			
-			case "INC": 
-				writeln("Invalid Command");
-				continue;
-			
-			case "INP": 
-				writeln("Invalid Parameters");
-				continue;
-			
-			case "UAE": 
-				writeln("User already exists");
-				continue;
-			
-			case "UNR": 
-				writeln("User does not exists");
-				continue;
-			
-			case "INU": 
-				writeln("Username cannot be longer than 32 characters or include non-ASCII characters");
-				continue;
-			
-			default:
-				writeln("Message was corrupted");
-		}
+        ptrdiff_t bytesin = client_s.receiveFrom(in_buf);
+        while (bytesin == 0 || bytesin == Socket.ERROR)
+        {
+            Thread.sleep( dur!("seconds")( 3 ) ); 
+            writeln("");
+            writeln("Retrying..");
+            
+            //Send message and receive again
+            bytesout = client_s.sendTo(out_buf.toBytes(), server_addr);
+            if (bytesout == Socket.ERROR)
+            {
+                writeln("*** ERROR - sendTo() failed ");
+                return;
+            }
+            writeln("Sent.");
+            bytesin = client_s.receiveFrom(in_buf);
+        }
+        
+        //Output data received
+        string received = cast(string)in_buf;
+        string response = received[0..3];
+        
+        switch (response) {
+            case "ROK": 
+                string command = out_str[0..3];
+                
+                if(command == "QUO"){
+                    int i;
+                    string[] parts = received[4..$-1].split(',');
+                    string username = parts[0];
+                    write("Requested stock(s): ");
+                    
+                    for(i = 0; i < parts.length; ++i){
+                        username = parts[i];
+                        if(i == 0){
+                            write(username);
+                        }
+                        else{
+                            write(", ", username);
+                        }
+                    }
+                    writeln(".");
+                }
+                
+                else if(command == "REG"){
+                    writeln("User was registered successfully");
+                }
+                
+                else if(command == "UNR"){
+                    writeln("User was unregistered successfully");
+                }
+                continue;
+            
+            case "INC": 
+                writeln("Invalid Command");
+                continue;
+            
+            case "INP": 
+                writeln("Invalid Parameters");
+                continue;
+            
+            case "UAE": 
+                writeln("User already exists");
+                continue;
+            
+            case "UNR": 
+                writeln("User does not exists");
+                continue;
+            
+            case "INU": 
+                writeln("Username cannot be longer than 32 characters or include non-ASCII characters");
+                continue;
+            
+            default:
+                writeln("Message was corrupted");
+        }
     }
     
     // Close the client socket
