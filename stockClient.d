@@ -1,16 +1,16 @@
 //================================================ file = stockClient.d =====
-//=  Program to request desired stock value from server.		    =
+//=  Program to request desired stock value from server.		    		=
 //===========================================================================
 //=-------------------------------------------------------------------------=
 //=  Example input:                                                         =
 //=     REG, USERNAME;                                                      =
 //=    	UNR, USERNAME;                                                      =
-//=	QUO, USERNAME, APPL;						    =
-//=	QUO, USERNAME, APPL, FB;					    =
+//=	    QUO, USERNAME, APPL;						    					=
+//=	    QUO, USERNAME, APPL, FB;					    					=
 //=-------------------------------------------------------------------------=
 //=  Bugs: None known                                                       =
 //=-------------------------------------------------------------------------=
-//=  Build: dmd stockClient.d			                            =
+//=  Build: dmd stockClient.d			                            		=
 //=-------------------------------------------------------------------------=
 //=  Execute: .\stockClient.d                                               =
 //=-------------------------------------------------------------------------=
@@ -91,7 +91,7 @@ void main() {
 			writeln("Retrying..");
 			
 			//Send message and receive again
-			ptrdiff_t bytesout = client_s.sendTo(out_buf.toBytes(), server_addr);
+			bytesout = client_s.sendTo(out_buf.toBytes(), server_addr);
 			if (bytesout == Socket.ERROR)
 			{
 				writeln("*** ERROR - sendTo() failed ");
