@@ -86,9 +86,8 @@ void main() {
         ptrdiff_t bytesin = client_s.receiveFrom(in_buf);
         while (bytesin == 0 || bytesin == Socket.ERROR)
         {
-            Thread.sleep( dur!("seconds")( 3 ) ); 
-            writeln("");
-            writeln("Retrying..");
+            Thread.sleep( dur!("seconds")( 3 ) );
+            writeln("\nRetrying..");
             
             //Send message and receive again
             bytesout = client_s.sendTo(out_buf.toBytes(), server_addr);
