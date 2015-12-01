@@ -108,8 +108,11 @@ void main() {
     // Set options
     client_s.setOption(SocketOptionLevel.SOCKET, SocketOption.RCVTIMEO, dur!"seconds"(5));
 
+    write("Enter the IP of the server: ");
+    char[] server_ip = readln.strip().dup;
+
     // Fill-in the server's address information and do a connect with the server
-    server_addr = new InternetAddress(IP_ADDR, PORT_NUM);
+    server_addr = new InternetAddress(server_ip, PORT_NUM);
     Address server_addr_plain = cast(Address)server_addr;
 
     while (1) {
