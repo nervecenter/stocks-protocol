@@ -147,7 +147,7 @@ void main() {
             bytesin = client_s.receiveFrom(in_buf, server_addr_plain);
             if (bytesin > 0 || counter == 3) { break; }
 
-            write("Retrying...");
+            writeln("Timed out. Retrying...");
             bytesout = client_s.sendTo(out_buf.toBytes(), server_addr);
             if (bytesout == Socket.ERROR)
             {
