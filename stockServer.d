@@ -188,7 +188,7 @@ void main()
         File f = File("userList.txt", "r");
         string user;
         
-        while ((user = f.readln()) !is null) 
+        while ((user = f.readln().strip()) !is null) 
         {
             userList ~= user;
         }
@@ -200,9 +200,9 @@ void main()
         File f = File("stockList.txt", "r");
         string stock;
         
-        while ((stock = f.readln()) !is null) 
+        while ((stock = f.readln().strip()) !is null) 
         {
-            string[] nameAndVal = stock.strip().split(',');
+            string[] nameAndVal = stock.split(',');
             stockList[nameAndVal[0]] = nameAndVal[1];
         }
     }
@@ -216,7 +216,7 @@ void main()
         destroy(sendBuffer);
         destroy(receiveBuffer);
         
-        writeln("\\nListening...");
+        writeln("\nListening...");
         bytesReceived = serverSocket.receiveFrom(receiveBuffer, clientAddress);
         if (bytesReceived == 0 || bytesReceived == Socket.ERROR) 
         {
