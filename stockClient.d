@@ -1,23 +1,15 @@
 //================================================ file = stockClient.d =====
-//=  Program to request desired stock value from server.                    =
+//=  Program to request desired stock value from stockServer                =
 //===========================================================================
+//=  Build: Download the latest DMD from http://dlang.org/download.html     =
+//=         In a command line, run:                                         =
+//=             dmd stockClient.d                                           =
 //=-------------------------------------------------------------------------=
-//=  Example input:                                                         =
-//=     REG, USERNAME;                                                      =
-//=     UNR, USERNAME;                                                      =
-//=     QUO, USERNAME, APPL;                                                =
-//=     QUO, USERNAME, APPL, FB;                                            =
-//=-------------------------------------------------------------------------=
-//=  Bugs: None known                                                       =
-//=-------------------------------------------------------------------------=
-//=  Build: dmd stockClient.d                                               =
-//=-------------------------------------------------------------------------=
-//=  Execute: ./stockClient.d                                               =
+//=  Execute: On Unix:      ./stockClient                                   =
+//=           On Windows:   ./stockClient.exe or .\stockClient.exe          =
 //=-------------------------------------------------------------------------=
 //=  Authors: Christopher Collazo & Andres Pico                             =
-//=          University of South Florida                                    =
-//=-------------------------------------------------------------------------=
-//=  History: AP (11/28/15) - Started file                                  =
+//=           University of South Florida                                   =
 //===========================================================================
 
 
@@ -25,17 +17,30 @@
 import std.stdio,
     std.socket,
     std.outbuffer,
-    std.string,
-    core.thread,
-    std.conv;
+    std.string;
 
+//----- Include functions ---------------------------------------------------
+import std.conv : to;
+import core.time : dur;
     
 //----- Defines -------------------------------------------------------------
-ushort PORT_NUM = 1050;             // Port number used at the server
-char[] IP_ADDR = "127.0.0.1".dup;   // IP address of server
+enum PORT_NUM = 1050;             // Port number used at the server
+enum IP_ADDR = "127.0.0.1".dup;   // IP address of server
 
-string constructRequest() {
-    while (1) {
+//----- Functions -----------------------------------------------------------
+
+/*
+==================== 
+constructRequest
+
+  Presents a menu to select an action, and then returns the proper request
+  string by recursing into the proper function.
+==================== 
+*/
+string constructRequest()
+{
+    while (1)
+    {
         writeln("\nWelcome to GetStock. Please select an option:");
         writeln("1) Register your username");
         writeln("2) Unregister your username");
@@ -43,9 +48,10 @@ string constructRequest() {
         writeln("4) Send command \"QQQ,Joe,IBM;\"");
         writeln("5) Quit");
         write("Enter an option: ");
-        int o = readln().strip().to!int();
+        int option = readln().strip().to!int();
 
-        switch (o) {
+        switch (option)
+        {
             case 1:
                 return registerCommand();
             case 2:
@@ -62,29 +68,56 @@ string constructRequest() {
     }
 }
 
-string registerCommand() {
+/*
+==================== 
+registerCommand
+
+  Asks for a username to register, returns the command to send.
+==================== 
+*/
+string registerCommand()
+{
     writeln("\nEnter a username to register: ");
     string username = readln().strip();
     return "REG," ~ username ~ ";";
 }
 
-string unregisterCommand() {
+/*
+==================== 
+unregisterCommand
+
+  Asks for a username to unregister, returns the command to send.
+==================== 
+*/
+string unregisterCommand()
+{
     writeln("\nEnter a username to unregister: ");
     string username = readln().strip();
     return "UNR," ~ username ~ ";";
 }
 
-string quoteCommand() {
+/*
+==================== 
+quoteCommand
+
+  Asks for a registered username to request with, then continuously 
+  accepts strings typed by the user as stock names; returns a 
+  constructed request when the user types "done".
+==================== 
+*/
+string quoteCommand()
+{
     writeln("\nEnter a registered username to request with: ");
     string username = readln().strip();
 
     string[] stockNames;
-    write("Enter a series of stock tickers to quote, ");
+    writeln("\nEnter a series of stock tickers to request quotes for, ");
     writeln("press enter after each one. Type \"done\" to finish.");
 
     string command = "QUO," ~ username;
 
-    while (1) {
+    while (1)
+    {
         string ticker = readln().strip().toUpper();
         if (ticker == "DONE") { break; }
         command ~= ("," ~ ticker);
@@ -95,126 +128,134 @@ string quoteCommand() {
 }
 
 //===== Main program ========================================================
-void main() {
-    Socket                  client_s;        // Client socket descriptor
-    InternetAddress         server_addr;     // Server Internet address
-    OutBuffer               out_buf;         // Output buffer for data
-    ubyte[4096]             in_buf;          // Input buffer for data
-    int                     counter;
+void main() 
+{
+    Socket                  clientSocket;
+    InternetAddress         serverAddress;
+    Address                 serverAddressPlain;
+    OutBuffer               sendBuffer;
+    ubyte[4096]             receiveBuffer;
+    int                     retryCounter;
+    ptrdiff_t               bytesOut;
+    ptrdiff_t               bytesIn;
     string[]                stockNames;
+    string[]                stockNumbers;
+    string                  clientCommand;
+    string                  serverSent;
+    string                  serverResponseCode;
         
-    client_s = new Socket(AddressFamily.INET, SocketType.DGRAM, ProtocolType.UDP);
-
-    // Set options
-    client_s.setOption(SocketOptionLevel.SOCKET, SocketOption.RCVTIMEO, dur!"seconds"(5));
+    clientSocket = new Socket(AddressFamily.INET, SocketType.DGRAM, ProtocolType.UDP);
+    clientSocket.setOption(SocketOptionLevel.SOCKET, SocketOption.RCVTIMEO, dur!"seconds"(5));
 
     write("Enter the IP of the server: ");
-    char[] server_ip = readln.strip().dup;
-
-    // Fill-in the server's address information and do a connect with the server
-    server_addr = new InternetAddress(server_ip, PORT_NUM);
-    Address server_addr_plain = cast(Address)server_addr;
+    char[] serverIP = readln.strip().dup;
+    serverAddress = new InternetAddress(serverIP, PORT_NUM);
+    serverAddressPlain = cast(Address)serverAddress;
 
     while (1) {
-        destroy(out_buf);
-        destroy(in_buf);
+        // Clear our buffers for safety
+        destroy(sendBuffer);
+        destroy(receiveBuffer);
 
-        //Read in message to send
-        out_buf = new OutBuffer();
+        // Get the message to send from the user
         string request = constructRequest();
         if (request == "quit") { break; }
-        out_buf.write(request);
-        if (request[0..3] == "QUO") {
-            stockNames = request.chomp(";").split(',')[2..$];
+        
+        // Write our request into the send buffer; pull the command and if 
+        // it's a quote command, pull the stock names from it for later listing
+        sendBuffer = new OutBuffer();
+        sendBuffer.write(request);
+        clientCommand = request[0..3];
+        if (request[0..3] == "QUO") 
+        { 
+            stockNames = request.chomp(";").split(',')[2..$]; 
         }
 
-        // Send to the server using the client socket
-        debug write("\nSending message...");
-
-        ptrdiff_t bytesout = client_s.sendTo(out_buf.toBytes(), server_addr);
-        if (bytesout == Socket.ERROR)
+        // Send our message. If we receive nothing back, 
+        bytesOut = clientSocket.sendTo(sendBuffer.toBytes(), serverAddress);
+        if (bytesOut == Socket.ERROR)
         {
             writeln("*** ERROR - sendTo() failed ");
             return;
         }
-        debug writeln("Sent.");
-        counter = 1;
 
-        // Wait to receive a message for 3 seconds, else resend
-        ptrdiff_t bytesin = Socket.ERROR;
-        while (bytesin == Socket.ERROR)
+        bytesIn = Socket.ERROR;
+        retryCounter = 1;
+        while (bytesIn == Socket.ERROR)
         {
-            bytesin = client_s.receiveFrom(in_buf, server_addr_plain);
-            if (bytesin > 0 || counter == 3) { break; }
+            bytesIn = clientSocket.receiveFrom(receiveBuffer, serverAddressPlain);
+            if (bytesIn > 0 || retryCounter == 3) { break; }
 
             writeln("Timed out. Retrying...");
-            bytesout = client_s.sendTo(out_buf.toBytes(), server_addr);
-            if (bytesout == Socket.ERROR)
+            bytesOut = clientSocket.sendTo(sendBuffer.toBytes(), serverAddress);
+            if (bytesOut == Socket.ERROR)
             {
                 writeln("*** ERROR - sendTo() failed ");
                 return;
             }
-            debug writeln("Sent.");
-            counter += 1;
+            retryCounter += 1;
         }
 
-        if (counter == 3) { writeln("\nNo response from the server."); continue; }
+        if (retryCounter == 3) 
+        { 
+            writeln("\nNo response from the server."); 
+            continue; 
+        }
         
-        string command = request[0..3];
+        serverSent = cast(string)receiveBuffer[0..bytesIn];
+        if (serverSent[$-1] != ';') 
+        { 
+            writeln("Message was corrupted, no semicolon."); 
+            continue; 
+        }
+        serverResponseCode = serverSent[0..3];
 
-        //Output data received
-        string received = cast(string)in_buf[0..bytesin];
-        debug writeln("Got message from server: ", received);
-        if (received[$-1] != ';') { writeln("Message was corrupted."); continue; }
-
-        string responseCode = received[0..3];
         writeln();
         
-        switch (responseCode) {
+        switch (serverResponseCode) {
             case "ROK": 
-                if(command == "QUO"){
-                    string[] stockNumbers = received[4..$-1].split(',');
-                    debug writeln(stockNames, "\n", stockNumbers);
-                    assert(stockNames.length == stockNumbers.length);
+                if(clientCommand == "QUO")
+                {
+                    stockNumbers = serverSent[4..$-1].split(',');
                     writeln("Requested stock(s): ");
-                    
-                    foreach (i, s; stockNumbers){
-                        if (s == "-1") {
+
+                    foreach (i, s; stockNumbers)
+                    {
+                        if (s == "-1") 
+                        {
                             writeln(stockNames[i], ": Not a valid stock ticker.");
-                        } else {
+                        }
+                        else 
+                        {
                             writeln(stockNames[i], ": ", s);
                         }
                     }
                 }
-                
-                else if(command == "REG"){
+                else if(clientCommand == "REG")
+                {
                     writeln("User was registered successfully.");
                 }
-                
-                else if(command == "UNR"){
+                else if(clientCommand == "UNR")
+                {
                     writeln("User was unregistered successfully.");
                 }
-                continue;
+                break;
             
             case "INC": 
-                writeln("Invalid command.");
-                continue;
+                writeln("Invalid command."); break;
             
             case "INP": 
-                writeln("Invalid parameters.");
-                continue;
+                writeln("Invalid parameters."); break;
             
             case "UAE": 
-                writeln("User already exists.");
-                continue;
+                writeln("User already exists."); break;
             
             case "UNR": 
-                writeln("User does not exist.");
-                continue;
+                writeln("User does not exist."); break;
             
             case "INU": 
-                writeln("Username cannot be longer than 32 characters or include non-ASCII characters.");
-                continue;
+                write("Username cannot be longer than 32 characters");
+                writeln("or include non-ASCII characters."); break;
             
             default:
                 writeln("Message was corrupted.");
@@ -222,8 +263,8 @@ void main() {
     }
     
     // Close the client socket
-    client_s.shutdown(SocketShutdown.BOTH);
-    client_s.close();
+    clientSocket.shutdown(SocketShutdown.BOTH);
+    clientSocket.close();
     
     writeln("Exiting...");
 }
