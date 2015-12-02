@@ -179,6 +179,7 @@ void main()
             return;
         }
 
+        // Send our first try, and if there is no response, try twice more before stopping
         bytesReceived = Socket.ERROR;
         retryCounter = 1;
         while (bytesReceived == Socket.ERROR)
