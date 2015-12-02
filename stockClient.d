@@ -151,7 +151,8 @@ void main()
     serverAddress = new InternetAddress(serverIP, PORT_NUM);
     serverAddressPlain = cast(Address)serverAddress;
 
-    while (1) {
+    while (1) 
+    {
         // Clear our buffers for safety
         destroy(sendBuffer);
         destroy(receiveBuffer);
@@ -211,7 +212,8 @@ void main()
 
         writeln();
         
-        switch (serverResponseCode) {
+        switch (serverResponseCode) 
+        {
             case "ROK": 
                 if(clientCommand == "QUO")
                 {
