@@ -12,18 +12,17 @@
 //=           University of South Florida                                   =
 //===========================================================================
 
-
-//----- Include files -------------------------------------------------------
+//----- File imports --------------------------------------------------------
 import std.stdio,
     std.socket,
     std.outbuffer,
     std.string;
 
-//----- Include functions ---------------------------------------------------
+//----- Function imports ----------------------------------------------------
 import std.conv : to;
 import core.time : dur;
     
-//----- Defines -------------------------------------------------------------
+//----- Constants -----------------------------------------------------------
 enum PORT_NUM = 1050;             // Port number used at the server
 enum IP_ADDR = "127.0.0.1".dup;   // IP address of server
 
@@ -136,8 +135,8 @@ void main()
     OutBuffer               sendBuffer;
     ubyte[4096]             receiveBuffer;
     int                     retryCounter;
-    ptrdiff_t               bytesOut;
-    ptrdiff_t               bytesIn;
+    ptrdiff_t               bytesSent;
+    ptrdiff_t               bytesReceived;
     string[]                stockNames;
     string[]                stockNumbers;
     string                  clientCommand;
@@ -172,23 +171,23 @@ void main()
         }
 
         // Send our message. If we receive nothing back, 
-        bytesOut = clientSocket.sendTo(sendBuffer.toBytes(), serverAddress);
-        if (bytesOut == Socket.ERROR)
+        bytesSent = clientSocket.sendTo(sendBuffer.toBytes(), serverAddress);
+        if (bytesSent == Socket.ERROR)
         {
             writeln("*** ERROR - sendTo() failed ");
             return;
         }
 
-        bytesIn = Socket.ERROR;
+        bytesReceived = Socket.ERROR;
         retryCounter = 1;
-        while (bytesIn == Socket.ERROR)
+        while (bytesReceived == Socket.ERROR)
         {
-            bytesIn = clientSocket.receiveFrom(receiveBuffer, serverAddressPlain);
-            if (bytesIn > 0 || retryCounter == 3) { break; }
+            bytesReceived = clientSocket.receiveFrom(receiveBuffer, serverAddressPlain);
+            if (bytesReceived > 0 || retryCounter == 3) { break; }
 
             writeln("Timed out. Retrying...");
-            bytesOut = clientSocket.sendTo(sendBuffer.toBytes(), serverAddress);
-            if (bytesOut == Socket.ERROR)
+            bytesSent = clientSocket.sendTo(sendBuffer.toBytes(), serverAddress);
+            if (bytesSent == Socket.ERROR)
             {
                 writeln("*** ERROR - sendTo() failed ");
                 return;
@@ -202,7 +201,7 @@ void main()
             continue; 
         }
         
-        serverSent = cast(string)receiveBuffer[0..bytesIn];
+        serverSent = cast(string)receiveBuffer[0..bytesReceived];
         if (serverSent[$-1] != ';') 
         { 
             writeln("Message was corrupted, no semicolon."); 
