@@ -126,6 +126,7 @@ registerUsername
 string registerUsername(string username, ref string[] userList) 
 {
     if (isUserRegistered(username, userList)) { return "UAE;"; }
+    if (username.length < 1) { return "INP;"; }
 
     auto m = matchAll(username, regex(`[A-Z0-9]{1,32}`));
     string match = m.front.hit;
